@@ -106,27 +106,22 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  data=[]
+  venues = Venue.query.all()
+
+  for venue in venues:
+
+    
+    data.append({
+      "city" : venue.city ,
+      "state" : venue.state ,
+      "venues" : [{
+        "id" : venue.id,
+        "name" : venue.name 
+      }]
+    })
+    
+  
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -240,13 +235,32 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  form = VenueForm()
+  try:
+   added_venue=Venue(
+    name=form.name.data,
+    genres=form.genres.data,
+    city=form.city.data,
+    state=form.state.data,
+    phone=form.phone.data,
+    address= form.address.data,
+    facebook_link=form.facebook_link.data,
+    image_link=form.image_link.data
+    )
+   db.session.add(added_venue)
+   db.session.commit()
 
   # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
+   flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  except:
+    # TODO: on unsuccessful db insert, flash an error instead.
+   db.session.rollback()
+   flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  finally:
+     db.session.close()
+     return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
