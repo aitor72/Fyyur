@@ -271,13 +271,17 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+  search_term = request.form.get('search_term', '')
+  data = Artist.query.filter(Artist.name.ilike('%{}%'.format(search_term))).all()
+  info = []
+  for outcome in data:
+    info.append({
+      "id":outcome.id,
+      "name": outcome.name
+    })
+  response = {
+    "count":len(data),
+    "data": info
   }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -332,28 +336,69 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
+ 
   # TODO: populate form with fields from artist with ID <artist_id>
+  selected_artist= Artist.query.get(artist_id)
+  form.name.data = selected_artist.name
+  form.genres.data=selected_artist.genres,
+  form.city.data = selected_artist.city,
+  form.state.data = selected_artist.state,
+  form.phone.data = selected_artist.phone,
+  form.facebook_link.data = selected_artist.facebook_link,
+  #form.image_link.data = edit_artist.image_link
+  artist={
+    "id": selected_artist.id,
+    "name": selected_artist.name,
+    "genres": selected_artist.genres,
+    "city": selected_artist.city,
+    "state": selected_artist.state,
+    "phone": selected_artist.phone,
+    "website": selected_artist.website,
+    "facebook_link": selected_artist.facebook_link,
+    "seeking_venue": True,
+    "seeking_description": selected_artist.seeking_description,
+    "image_link": selected_artist.image_link,
+    "past_shows": [{
+      "venue_id": "",
+      "venue_name": "",
+      "venue_image_link": "",
+      "start_time": ""
+    }],
+    "upcoming_shows": [],
+    #"past_shows_count": selected_artist.past_shows_count,
+    "upcoming_shows_count": 0,
+  }
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
+  form = ArtistForm()
+  try:
+    
+    edited_artist=Artist.query.get(artist_id)
+    edited_artist.name=form.name.data,
+    edited_artist.genres=form.genres.data,
+    edited_artist.city=form.city.data,
+    edited_artist.state=form.state.data,
+    edited_artist.phone=form.phone.data,
+    edited_artist.facebook_link=form.facebook_link.data,
+    edited_artist.image_link=form.image_link.data
+    
+   #db.session.add(edited_artist)
+    db.session.commit()
+    # on successful db insert, flash success
+    flash('Artist ' + request.form['name'] + ' was successfully listed!')
 
-  return redirect(url_for('show_artist', artist_id=artist_id))
+  except:
+    # TODO: on unsuccessful db insert, flash an error instead.
+    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+     db.session.rollback()
+     flash('An error occurred. Venue ' + data.name + ' could not be listed.')
+  finally:
+     db.session.close()
+     return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
