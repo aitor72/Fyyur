@@ -1,6 +1,45 @@
 Fyyur
 -----
 
+### How to run (For the reviewer)
+
+First install the requirements:
+
+```
+  $ pip install -r requirements.txt
+```
+
+
+
+Set the flask parameters:
+
+```
+  $ export FLASK_APP=app
+  $ export FLASK_ENV=development
+```
+
+
+
+Set up the db & migrate:
+
+- Change db details in app.py:27 & config.py:13
+
+```
+  $ flask db migrate
+```
+
+
+
+Run the app:
+
+```
+  $ flask run
+```
+
+
+
+That's all ;)
+
 ### Introduction
 
 Fyyur is a musical venue and artist booking site that facilitates the discovery and bookings of shows between local performing artists and venues. This site lets you list new artists and venues, discover them, and list shows with artists as a venue owner.
